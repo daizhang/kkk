@@ -21,7 +21,17 @@ phases:
       - NEW_VERSION=$(aws lambda publish-version --function-name kkk --query 'Version' --output text)
       - echo New Lambda version: $NEW_VERSION
       - echo Creating a new deployment in CodeDeploy...
-      - aws deploy create-deployment --application-name daisyTestDeploy --deployment-group-name daisyDeloymentGroup --s3-location bucket=test-bucket-dr/deployment/,key=kkk.zip,bundleType=zip,eTag=your-etag
+
+      # 获取 S3 文件的 ETag
+      - NEW_ETAG=$(aws s3api head-object --bucket test-bucket-dr --key deployment/kkk.zip --query 'ETag' --output text)
+
+      # 创建 CodeDeploy 部署
+      - |
+        aws deploy create-deployment \
+          --application-name daisyTestDeploy \
+          --deployment-group-name daisyDeloymentGroup \
+          --s3-location "bucket=test-bucket-dr,key=deployment/kkk.zip,bundleType=zip,eTag=$NEW_ETAG"
+
 artifacts:
   files:
     - '**/*'
