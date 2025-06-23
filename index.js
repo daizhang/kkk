@@ -4,8 +4,8 @@ export const handler = async (event) => {
 
   // 模拟不同环境的响应
   const responseMessage = environment === 'blue' 
-      ? '3bbbbYou are using the Blue Environment.' 
-      : '3bbbbYou are using the Green Environment.';
+      ? '3ccccccYou are using the Blue Environment.'
+      : '3ccccYou are using the Green Environment.';
 
   return {
       statusCode: 200,
