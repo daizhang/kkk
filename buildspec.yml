@@ -16,15 +16,26 @@ phases:
     commands:
       - echo Uploading the Lambda function to S3...
       - aws s3 cp function.zip s3://test-bucket-dr/deployment/kkk.zip
+
+      # 发布新的 Lambda 版本，指定版本号 v1
       - echo Publishing new Lambda version...
       - NEW_VERSION=$(aws lambda publish-version --function-name kkk --query 'Version' --output text)
-      - echo Creating a new deployment in CodeDeploy...
 
       # 获取 S3 文件的 ETag
+      - echo Getting the ETag for the uploaded S3 object...
       - NEW_ETAG=$(aws s3api head-object --bucket test-bucket-dr --key deployment/kkk.zip --query 'ETag' --output text)
 
-      # 创建 CodeDeploy 部署（确保这个命令是一个字符串）
-      - aws deploy create-deployment --application-name daisyTestDeploy --deployment-group-name daisyDeloymentGroup --s3-location "bucket=test-bucket-dr,key=deployment/kkk.zip,bundleType=zip,eTag=$NEW_ETAG"
+      # 创建 Lambda 别名 blue，指向新版本 v1
+      - echo Creating a new alias 'blue' for the Lambda function...
+      - aws lambda create-alias --function-name kkk --name blue --function-version $NEW_VERSION
+
+      # 创建 CodeDeploy 部署
+      - echo Creating a new deployment in CodeDeploy...
+      - aws deploy create-deployment \
+        --application-name daisyTestDeploy \
+        --deployment-group-name daisyDeloymentGroup \
+        --s3-location "bucket=test-bucket-dr,key=deployment/kkk.zip,bundleType=zip,eTag=$NEW_ETAG" \
+        --description "Deployment for Lambda version $NEW_VERSION"
 
 artifacts:
   files:
