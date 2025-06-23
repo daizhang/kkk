@@ -3,59 +3,37 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 14  # 使用 Node.js 14
+      nodejs: 22
     commands:
       - echo Installing dependencies...
 
   build:
     commands:
       - echo Building the Lambda function...
-      - zip -r function.zip .  # 将所有文件打包成 function.zip
+      - zip -r function.zip .  # 打包 Lambda 函数代码
 
   post_build:
     commands:
-      - echo Uploading Lambda function to S3...
-      - aws s3 cp function.zip s3://test-bucket-dr/deployment/kkk.zip  # 上传 Lambda 打包文件到 S3
+      - echo Uploading the Lambda function to S3...
+      - aws s3 cp function.zip s3://test-bucket-dr/deployment/kkk.zip
+
+      # 更新 Lambda 函数的代码，指向 S3 中的 ZIP 文件
+      - echo Updating Lambda function code...
+      - aws lambda update-function-code --function-name kkk --s3-bucket test-bucket-dr --s3-key deployment/kkk.zip
+
+      # 发布新的 Lambda 版本
+      - echo Publishing new Lambda version...
+      - NEW_VERSION=$(aws lambda publish-version --function-name kkk --query 'Version' --output text)
 
       # 获取 S3 文件的 ETag
+      - echo Getting the ETag for the uploaded S3 object...
       - NEW_ETAG=$(aws s3api head-object --bucket test-bucket-dr --key deployment/kkk.zip --query 'ETag' --output text)
 
-      # 更新 Lambda 函数代码
-      - echo Updating Lambda function code from S3...
-      - aws lambda update-function-code \
-        --function-name kkk \
-        --s3-bucket test-bucket-dr \
-        --s3-key deployment/kkk.zip  # 更新 Lambda 函数代码
-
-      # 尝试发布 Lambda 函数的新版本，并实现重试机制
-      - |
-        RETRY_COUNT=0
-        MAX_RETRIES=5
-        SUCCESS=false
-        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-          # 尝试发布 Lambda 版本
-          NEW_VERSION=$(aws lambda publish-version --function-name kkk --query 'Version' --output text 2>&1)
-          if [[ $? -eq 0 ]]; then
-            echo "Successfully published Lambda version: $NEW_VERSION"
-            SUCCESS=true
-            break
-          else
-            echo "Publish failed: $NEW_VERSION. Retrying in 30 seconds..."
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-            sleep 30
-          fi
-        done
-
-        if [ "$SUCCESS" = false ]; then
-          echo "Failed to publish Lambda version after $MAX_RETRIES retries. Exiting."
-          exit 1
-        fi
-
-      # 创建 Lambda 别名（blue）
+      # 创建 Lambda 别名 blue，指向新版本
       - echo Creating a new alias 'blue' for the Lambda function...
       - aws lambda create-alias --function-name kkk --name blue --function-version $NEW_VERSION
 
-      # 创建 CodeDeploy 部署（假设你使用 CodeDeploy 部署 Lambda）
+      # 创建 CodeDeploy 部署
       - echo Creating a new deployment in CodeDeploy...
       - aws deploy create-deployment \
         --application-name daisyTestDeploy \
