@@ -17,6 +17,10 @@ phases:
       - echo Uploading the Lambda function to S3...
       - aws s3 cp function.zip s3://test-bucket-dr/deployment/kkk.zip
 
+      # 更新 Lambda 函数的代码，指向 S3 中的 ZIP 文件
+      - echo Updating Lambda function code...
+      - aws lambda update-function-code --function-name kkk --s3-bucket test-bucket-dr --s3-key deployment/kkk.zip
+
       # 发布新的 Lambda 版本，指定版本号 v1
       - echo Publishing new Lambda version...
       - NEW_VERSION=$(aws lambda publish-version --function-name kkk --query 'Version' --output text)
