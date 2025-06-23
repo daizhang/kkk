@@ -21,10 +21,7 @@ phases:
       - NEW_VERSION=$(aws lambda publish-version --function-name kkk --query 'Version' --output text)
       - echo New Lambda version: $NEW_VERSION
       - echo Creating a new deployment in CodeDeploy...
-      - aws deploy create-deployment \
-          --application-name daisyTestDeploy \
-          --deployment-group-name daisyDeloymentGroup \
-          --s3-location bucket=test-bucket-dr/deployment/,key=kkk.zip,bundleType=zip,eTag=your-etag
+      - aws deploy create-deployment --application-name daisyTestDeploy --deployment-group-name daisyDeloymentGroup --s3-location bucket=test-bucket-dr/deployment/,key=kkk.zip,bundleType=zip,eTag=your-etag
 artifacts:
   files:
     - '**/*'
