@@ -25,12 +25,8 @@ phases:
       # 获取 S3 文件的 ETag
       - NEW_ETAG=$(aws s3api head-object --bucket test-bucket-dr --key deployment/kkk.zip --query 'ETag' --output text)
 
-      # 创建 CodeDeploy 部署
-      - |
-        aws deploy create-deployment \
-          --application-name daisyTestDeploy \
-          --deployment-group-name daisyDeloymentGroup \
-          --s3-location "bucket=test-bucket-dr,key=deployment/kkk.zip,bundleType=zip,eTag=$NEW_ETAG"
+      # 创建 CodeDeploy 部署（确保这个命令是一个字符串）
+      - aws deploy create-deployment --application-name daisyTestDeploy --deployment-group-name daisyDeloymentGroup --s3-location "bucket=test-bucket-dr,key=deployment/kkk.zip,bundleType=zip,eTag=$NEW_ETAG"
 
 artifacts:
   files:
