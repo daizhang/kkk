@@ -6,7 +6,6 @@ phases:
       nodejs: 22
     commands:
       - echo Installing dependencies...
-      - npm install
 
   build:
     commands:
@@ -18,35 +17,23 @@ phases:
       - echo Uploading the Lambda function to S3...
       - aws s3 cp function.zip s3://test-bucket-dr/deployment/kkk.zip
 
-      # 尝试发布 Lambda 新版本，加入重试机制
-      - echo Attempting to publish a new Lambda version...
-      - |
-        RETRY_COUNT=0
-        MAX_RETRIES=5
-        SUCCESS=false
-        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-          # 尝试发布 Lambda 版本
-          NEW_VERSION=$(aws lambda publish-version --function-name kkk --query 'Version' --output text 2>&1)
-          if [[ $? -eq 0 ]]; then
-            echo "Successfully published Lambda version: $NEW_VERSION"
-            SUCCESS=true
-            break
-          else
-            echo "Publish failed: $NEW_VERSION. Retrying in 30 seconds..."
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-            sleep 30
-          fi
-        done
+      # 更新 Lambda 函数的代码，指向 S3 中的 ZIP 文件
+      - echo Updating Lambda function code...
+      - aws lambda update-function-code --function-name kkk --s3-bucket test-bucket-dr --s3-key deployment/kkk.zip
 
-        if [ "$SUCCESS" = false ]; then
-          echo "Failed to publish Lambda version after $MAX_RETRIES retries. Exiting."
-          exit 1
-        fi
+      # 发布新的 Lambda 版本，添加重试机制
+      - echo Publishing new Lambda version...
+      - |
+        for i in {1..5}; do
+          NEW_VERSION=$(aws lambda publish-version --function-name kkk --query 'Version' --output text) && break || {
+            echo "Publish version failed, retrying in 10 seconds... (Attempt $i/5)"
+            sleep 10
+          }
+        done
 
       # 获取 S3 文件的 ETag
       - echo Getting the ETag for the uploaded S3 object...
       - NEW_ETAG=$(aws s3api head-object --bucket test-bucket-dr --key deployment/kkk.zip --query 'ETag' --output text)
-      - echo New ETag: $NEW_ETAG
 
       # 创建 Lambda 别名 blue，指向新版本
       - echo Creating a new alias 'blue' for the Lambda function...
