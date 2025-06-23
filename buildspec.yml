@@ -41,11 +41,7 @@ phases:
 
       # 创建 CodeDeploy 部署
       - echo Creating a new deployment in CodeDeploy...
-      - aws deploy create-deployment \
-        --application-name daisyTestDeploy \
-        --deployment-group-name daisyDeloymentGroup \
-        --s3-location "bucket=test-bucket-dr,key=deployment/kkk.zip,bundleType=zip,eTag=$NEW_ETAG" \
-        --description "Deployment for Lambda version $NEW_VERSION"
+      - aws deploy create-deployment --application-name daisyTestDeploy --deployment-group-name daisyDeloymentGroup --s3-location bucket=test-bucket-dr,key=deployment/kkk.zip,bundleType=zip,eTag=$NEW_ETAG --description "Deployment for Lambda version $NEW_VERSION"
 
 artifacts:
   files:
