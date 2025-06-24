@@ -36,8 +36,8 @@ phases:
       - NEW_ETAG=$(aws s3api head-object --bucket test-bucket-dr --key deployment/kkk.zip --query 'ETag' --output text)
 
       # 创建 Lambda 别名 blue，指向新版本
-      - echo Creating a new alias 'blue' for the Lambda function...
-      - aws lambda create-alias --function-name kkk --name blue --function-version $NEW_VERSION
+      - echo Creating a new alias 'green' for the Lambda function...
+      - aws lambda create-alias --function-name kkk --name green --function-version $NEW_VERSION
 
       # 创建 CodeDeploy 部署
       - echo Creating a new deployment in CodeDeploy...
