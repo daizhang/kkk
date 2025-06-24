@@ -37,7 +37,7 @@ phases:
 
       # 创建 Lambda 别名 green，指向新版本
       - echo Creating a new alias 'green' for the Lambda function...
-      - aws lambda create-alias --function-name kkk --name green --function-version $NEW_VERSION
+      - aws lambda create-alias --function-name kkk --name green$NEW_VERSION --function-version $NEW_VERSION
 
       - echo update alias to new version
       - aws lambda update-alias --function-name kkk --name blue --function-version $NEW_VERSION
